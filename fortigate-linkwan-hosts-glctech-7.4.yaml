@@ -1,0 +1,278 @@
+# =====================================================================
+# Links WAN como HOSTS LOGICOS - GLCTech Monitoramento - v7.4
+# ---------------------------------------------------------------------
+# Identico a versao anterior (preprocessing + tags), agora com a
+# identificacao de fornecedor nos templates:
+#     vendor:  GLCTech Monitoramento
+#     version: 7.4
+#
+# IMPORTANTE: a tag "vendor" exige o formato de exportacao 6.4, entao
+# este arquivo importa em Zabbix 6.4, 7.0, 7.2 e 7.4 - NAO em 6.0 LTS
+# (para 6.0, use o arquivo anterior, sem vendor).
+#
+# Se o import reclamar do formato da versao do vendor, troque o valor
+# para '7.4-0' nas duas ocorrencias de "version: '7.4'".
+#
+# COMO APLICAR: Coleta de dados -> Templates -> Importar, com
+# "Criar novo" e "Atualizar existente" marcados e nenhum
+# "Excluir ausentes".
+# =====================================================================
+zabbix_export:
+  version: '6.4'
+  template_groups:
+  - uuid: f963a8658bb747249ad6cd921f0d348d
+    name: Templates
+  host_groups:
+  - uuid: c0545e9fabc34114a0156192724350ea
+    name: Links WAN
+  templates:
+  - uuid: 581af321ea8448a4946218eded93ef02
+    template: Link WAN by FortiGate SNMP
+    name: Link WAN by FortiGate SNMP
+    vendor:
+      name: GLCTech Monitoramento
+      version: '7.4'
+    description: Coleta as metricas de um Link Monitor especifico do FortiGate (indice definido pela macro {$LINKMON.INDEX}). Aplicado automaticamente pelos host prototypes do template "FortiGate Link WAN host discovery".
+    groups:
+    - name: Templates
+    items:
+    - uuid: 302b1c46391c4a9b8c0f73e9c4e4b7eb
+      name: Estado do link (Link Monitor)
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.3.{$LINKMON.INDEX}
+      key: linkwan.state
+      delay: 1m
+      description: 'fgLinkMonitorState: 0 = alive, 1 = dead. Mesmo criterio usado pelo FortiGate para failover/SD-WAN.'
+      valuemap:
+        name: FortiGate Link Monitor state
+      tags:
+      - tag: component
+        value: link-wan
+    - uuid: 28b393eaa2a94c458151dfa42eb6b78d
+      name: Latencia
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.4.{$LINKMON.INDEX}
+      key: linkwan.latency
+      delay: 1m
+      value_type: FLOAT
+      units: ms
+      description: 'fgLinkMonitorLatency: latencia media da conexao.'
+      tags:
+      - tag: component
+        value: link-wan
+      preprocessing:
+      - type: REGEX
+        parameters: &id001
+        - ^([0-9]+(\.[0-9]+)?)
+        - \1
+        error_handler: DISCARD_VALUE
+    - uuid: 81cc34cdbc02470db0d157b7a672e60c
+      name: Jitter
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.5.{$LINKMON.INDEX}
+      key: linkwan.jitter
+      delay: 1m
+      value_type: FLOAT
+      units: ms
+      description: 'fgLinkMonitorJitter: jitter medio da conexao.'
+      tags:
+      - tag: component
+        value: link-wan
+      preprocessing:
+      - type: REGEX
+        parameters: *id001
+        error_handler: DISCARD_VALUE
+    - uuid: 9986e613c3184ec7987d578d21ed8434
+      name: Perda de pacotes
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.8.{$LINKMON.INDEX}
+      key: linkwan.loss
+      delay: 1m
+      value_type: FLOAT
+      units: '%'
+      description: 'fgLinkMonitorPacketLoss: percentual de pacotes perdidos.'
+      tags:
+      - tag: component
+        value: link-wan
+      preprocessing:
+      - type: REGEX
+        parameters: *id001
+        error_handler: DISCARD_VALUE
+    - uuid: 7746d17ce3bf46a7b8b9348f32c804de
+      name: Pacotes enviados por segundo
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.6.{$LINKMON.INDEX}
+      key: linkwan.sent
+      delay: 1m
+      value_type: FLOAT
+      units: pps
+      preprocessing:
+      - type: CHANGE_PER_SECOND
+        parameters:
+        - ''
+      description: fgLinkMonitorPacketSend (contador convertido em taxa por segundo).
+      tags:
+      - tag: component
+        value: link-wan
+    - uuid: 1b027cc35f94464d964756b6b59d40a7
+      name: Pacotes recebidos por segundo
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.7.{$LINKMON.INDEX}
+      key: linkwan.received
+      delay: 1m
+      value_type: FLOAT
+      units: pps
+      preprocessing:
+      - type: CHANGE_PER_SECOND
+        parameters:
+        - ''
+      description: fgLinkMonitorPacketRecv (contador convertido em taxa por segundo).
+      tags:
+      - tag: component
+        value: link-wan
+    - uuid: fbb7391750a74e7eb87ed84e3264f586
+      name: Pacotes fora de sequencia por segundo
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.13.{$LINKMON.INDEX}
+      key: linkwan.outofseq
+      delay: 1m
+      value_type: FLOAT
+      units: pps
+      preprocessing:
+      - type: CHANGE_PER_SECOND
+        parameters:
+        - ''
+      description: fgLinkMonitorOutofSeq (contador convertido em taxa por segundo).
+      tags:
+      - tag: component
+        value: link-wan
+    - uuid: 76c9cb387fe14d72b86de88b0e4c1c4c
+      name: Banda disponivel de entrada
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.10.{$LINKMON.INDEX}
+      key: linkwan.bandwidth.in
+      delay: 5m
+      value_type: FLOAT
+      units: Mbps
+      description: fgLinkMonitorBandwidthIn.
+      tags:
+      - tag: component
+        value: link-wan
+    - uuid: 6fa5ed5190be4970a230eed2defbf122
+      name: Banda disponivel de saida
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.11.{$LINKMON.INDEX}
+      key: linkwan.bandwidth.out
+      delay: 5m
+      value_type: FLOAT
+      units: Mbps
+      description: fgLinkMonitorBandwidthOut.
+      tags:
+      - tag: component
+        value: link-wan
+    - uuid: d565cf247dff4a44a2c4e71ee5a7df42
+      name: Banda disponivel bi-direcao
+      type: SNMP_AGENT
+      snmp_oid: 1.3.6.1.4.1.12356.101.4.8.2.1.12.{$LINKMON.INDEX}
+      key: linkwan.bandwidth.bi
+      delay: 5m
+      value_type: FLOAT
+      units: Mbps
+      description: fgLinkMonitorBandwidthBi.
+      tags:
+      - tag: component
+        value: link-wan
+    macros:
+    - macro: '{$LINKMON.INDEX}'
+      value: '0'
+      description: Indice SNMP do Link Monitor. Preenchido automaticamente pelo host prototype com {#SNMPINDEX}.
+    - macro: '{$LINKWAN.LATENCY.MAX}'
+      value: '200'
+      description: Latencia maxima aceitavel em ms antes de alertar.
+    - macro: '{$LINKWAN.LOSS.MAX}'
+      value: '10'
+      description: Perda de pacotes maxima aceitavel em % antes de alertar.
+    valuemaps:
+    - uuid: 05714098b88e4af09d88c831f5990616
+      name: FortiGate Link Monitor state
+      mappings:
+      - value: '0'
+        newvalue: Alive
+      - value: '1'
+        newvalue: Dead
+  - uuid: 3947fd7161e74d2c9c5fad8f092dc088
+    template: FortiGate Link WAN host discovery
+    name: FortiGate Link WAN host discovery
+    vendor:
+      name: GLCTech Monitoramento
+      version: '7.4'
+    description: Vincule este template ao host do FortiGate. Para cada Link Monitor descoberto, cria automaticamente um host logico "WAN - <nome>" no grupo "Links WAN", com o template "Link WAN by FortiGate SNMP" aplicado.
+    groups:
+    - name: Templates
+    discovery_rules:
+    - uuid: 998b71bc768f4d3c8a5aacef71ac2e4e
+      name: Link WAN host discovery
+      type: SNMP_AGENT
+      snmp_oid: discovery[{#LINKMON.NAME},1.3.6.1.4.1.12356.101.4.8.2.1.2]
+      key: linkwan.host.discovery
+      delay: 1h
+      lifetime: 7d
+      description: Descobre os Link Monitors (fgLinkMonitorName) e cria um host logico por circuito.
+      host_prototypes:
+      - uuid: 5a61ffafe08a4eac9574603ecfff2bc5
+        host: WAN - {#LINKMON.NAME}
+        name: WAN - {#LINKMON.NAME}
+        group_links:
+        - group:
+            name: Links WAN
+        macros:
+        - macro: '{$LINKMON.INDEX}'
+          value: '{#SNMPINDEX}'
+        templates:
+        - name: Link WAN by FortiGate SNMP
+        tags:
+        - tag: tipo
+          value: link-wan
+        - tag: link
+          value: '{#LINKMON.NAME}'
+  triggers:
+  - uuid: 54ad72df185e4137b033be129ef957b6
+    expression: last(/Link WAN by FortiGate SNMP/linkwan.state)=1
+    name: 'Link WAN indisponivel: Link Monitor reporta DEAD'
+    priority: HIGH
+    description: O FortiGate marcou este Link Monitor como dead - mesmo criterio usado para failover.
+    tags:
+    - tag: scope
+      value: availability
+    - tag: component
+      value: link-wan
+    - tag: circuito
+      value: '{HOST.NAME}'
+  - uuid: 7ee0473aad564240a5b62d2cc3270770
+    expression: min(/Link WAN by FortiGate SNMP/linkwan.latency,5m)>{$LINKWAN.LATENCY.MAX}
+    name: Latencia alta no link WAN (> {$LINKWAN.LATENCY.MAX} ms por 5m)
+    priority: WARNING
+    dependencies:
+    - name: 'Link WAN indisponivel: Link Monitor reporta DEAD'
+      expression: last(/Link WAN by FortiGate SNMP/linkwan.state)=1
+    tags:
+    - tag: scope
+      value: performance
+    - tag: component
+      value: link-wan
+    - tag: circuito
+      value: '{HOST.NAME}'
+  - uuid: efd6e88979484e8682df8e79bd9c675e
+    expression: min(/Link WAN by FortiGate SNMP/linkwan.loss,5m)>{$LINKWAN.LOSS.MAX}
+    name: Perda de pacotes alta no link WAN (> {$LINKWAN.LOSS.MAX}% por 5m)
+    priority: AVERAGE
+    dependencies:
+    - name: 'Link WAN indisponivel: Link Monitor reporta DEAD'
+      expression: last(/Link WAN by FortiGate SNMP/linkwan.state)=1
+    tags:
+    - tag: scope
+      value: performance
+    - tag: component
+      value: link-wan
+    - tag: circuito
+      value: '{HOST.NAME}'
